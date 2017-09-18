@@ -1,6 +1,11 @@
 [Migrating from ASP.NET Core 1.x to ASP.NET Core 2.0](https://docs.microsoft.com/en-us/aspnet/core/migration/1x-to-2x/)
 
-#### General changes in this repo
+#### General changes
 
-* Replace _netcoreapp1.1_ with _netcoreapp2.0_ when issuing dotnet commands like new and publish
-* Replace Docker image _microsoft/aspnetcore1.1.1_ with _microsoft/aspnetcore2.0_ in Dockerfile and when issung docker commands
+* Replace _netcoreapp1.1_ with _netcoreapp2.0_ when issuing dotnet commands like new and publish. Or just drop the _--framework_ option, thereby using version defined in the csproj file.
+
+#### Minor updates 
+* Nuget package Pomelo.EntityFrameworkCore.MySql is prerelease/RTM (chapter 5 and onwards). I'm currently using version 2.0.0-rtm-10062. You might have to update that one.
+* Bower package bootstrap is prerelease 4.0.0-alpha.5. Might have to update that one as well.
+
+Projects that have issues will have a local _dotnetcore2.0-migration.md_ file suggesting solutions.

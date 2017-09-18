@@ -41,8 +41,6 @@ namespace ExampleApp {
             app.UseStatusCodePages();
             app.UseStaticFiles();
             app.UseMvcWithDefaultRoute();
-
-            SeedData.EnsurePopulated(app);
         }
     }
 }
