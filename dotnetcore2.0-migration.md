@@ -2,7 +2,7 @@
 
 #### General changes
 
-* Replace _netcoreapp1.1_ with _netcoreapp2.0_ when issuing dotnet commands like new and publish. Or just drop the _--framework_ option, thereby using version defined in the csproj file.
+* Replace _netcoreapp1.1_ with _netcoreapp2.0_ when issuing dotnet commands like new and publish.
 
 #### Minor updates 
 * Nuget package Pomelo.EntityFrameworkCore.MySql is prerelease/RTM (chapter 5 and onwards). I'm currently using version 2.0.0-rtm-10062. You might have to update that one.
