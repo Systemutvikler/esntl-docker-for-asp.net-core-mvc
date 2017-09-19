@@ -42,6 +42,6 @@ docker start productapp1
 Cleanup:
 
 ```
-Note to author: 
-* Giving the container the same name as the image is a bad idea.
-* "docker start productapp1 productapp2 productapp3" will generate a lot of exceptions as all of the containers will try to create and populate the dabatase if none exists.
+Some reflections: 
+* Giving the container the same name as the image is a bad idea. E.g mysql.
+* "docker start productapp1 productapp2 productapp3" will generate a lot of exceptions as all of the containers will try to create and seed the dabatase if none exists.
