@@ -1,35 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System;
 
-namespace ExampleApp {
-    public class Program {
-        public static void Main(string[] args) {
-            var config = new ConfigurationBuilder()
-                 .AddCommandLine(args)
-                 .AddEnvironmentVariables()
-                 .Build();
+namespace ExampleApp
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var host = BuildWebHost(args);
 
-            if ((config["INITDB"] ?? "false") == "true") {
-                System.Console.WriteLine("Preparing Database...");
-                Models.SeedData.EnsurePopulated(new Models.ProductDbContext());
-                System.Console.WriteLine("Database Preparation Complete");
-            } else {
-                System.Console.WriteLine("Starting ASP.NET...");
-                var host = new WebHostBuilder()
-                .UseConfiguration(config)
-                .UseKestrel()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
+            using (var scope = host.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var config = services.GetService<IConfiguration>();
+
+                if ((config["INITDB"] ?? "false") == "true")
+                {
+                    try
+                    {
+                        System.Console.WriteLine("Preparing Database...");
+                        Models.SeedData.EnsurePopulated(services.GetService<Models.ProductDbContext>());
+                        System.Console.WriteLine("Database Preparation Complete");
+                    }
+                    catch (Exception ex)
+                    {
+                        var logger = services.GetRequiredService<ILogger<Program>>();
+                        logger.LogError(ex, "An error occurred seeding the DB.");
+                    }
+                    return;
+                }
+            }
+
+            System.Console.WriteLine("Starting ASP.NET...");
+            host.Run();
+        }
+
+        public static IWebHost BuildWebHost(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
                 .Build();
-
-                host.Run();
-            }
-        }
     }
 }
