@@ -1,45 +1,35 @@
 ﻿# Swarm mode using Docker Machine
 
-$managers=3
-$workers=3
-
 # Change the SwitchName to the name of your virtual switch
 $SwitchName = "MySwarmExternalSwitch"
 
 # create manager machine
 echo "======> Creating manager machine ..."
 docker-machine create -d hyperv --hyperv-virtual-switch $SwitchName manager
+echo "======> Initializing swarm manager ..."
+$managerip = docker-machine ip manager
+docker-machine ssh manager "docker swarm init --listen-addr $managerip --advertise-addr $managerip"
 
-# create dbhost machine
-echo "======> Creating dbhost machine ..."
-docker-machine create -d hyperv --hyperv-virtual-switch $SwitchName dbhost
+# get worker tokens
+$workertoken = docker-machine ssh manager "docker swarm join-token worker -q"
 
-# create worker machines
+# create/init worker machines
+$workernodes = "dbhost", "worker1", "worker2", "worker3"
 echo "======> Creating worker machines ..."
-for ($node=1;$node -le $workers;$node++) {
-	echo "======> Creating worker$node machine ..."
-	docker-machine create -d hyperv --hyperv-virtual-switch $SwitchName ('worker'+$node)
+foreach ($node in $workernodes) {
+	echo "======> Creating $node machine ..."
+	docker-machine create -d hyperv --hyperv-virtual-switch $SwitchName $node
+	echo "======> $node joining swarm as worker ..."
+	$nodeip = docker-machine ip $node
+	docker-machine ssh $node "docker swarm join --token $workertoken --listen-addr $nodeip --advertise-addr $nodeip $managerip"
 }
 
 # list all machines
+echo "======> List of docker machines"
 docker-machine ls
-echo "======> Initializing swarm manager ..."
-$managerip = docker-machine ip manager
-
-docker-machine ssh manager "docker swarm init --listen-addr $managerip --advertise-addr $managerip"
-
-# get manager and worker tokens
-$workertoken = docker-machine ssh manager "docker swarm join-token worker -q"
-
-$nodeip = docker-machine ip dbhost
-docker-machine ssh dbhost "docker swarm join --token $workertoken --listen-addr $nodeip --advertise-addr $nodeip $managerip"
-
-# workers join swarm
-for ($node=1;$node -le $workers;$node++) {
-	echo "======> worker$node joining swarm as worker ..."
-	$nodeip = docker-machine ip worker$node
-	docker-machine ssh "worker$node" "docker swarm join --token $workertoken --listen-addr $nodeip --advertise-addr $nodeip $managerip"
-}
 
 # show members of swarm
+echo "======> Members of swarm on manager node"
 docker-machine ssh manager "docker node ls"
+
+echo "Issue 'docker-machine ssh manager' and start typing commands on page 123, Labeling Swarm Nodes"
