@@ -9,4 +9,8 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="2.0.1-preview-10066" />
     <DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="2.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="certs\host\" />
+  </ItemGroup>
 </Project>

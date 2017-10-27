@@ -1,7 +1,15 @@
 ﻿# Swarm mode using Docker Machine
 
-# Change the SwitchName to the name of your virtual switch
+# Change the SwitchName to the name of your external virtual switch if you have one
 $SwitchName = "MySwarmExternalSwitch"
+
+# Disabled due to network problems downloading opt. Boot2Docker image
+# Create the switch on the first physical adapter if it doesn't exist
+#if (!$(Get-VMSwitch $SwitchName 2>$null)) {
+#	$netadaptername = $(Get-NetAdapter -Physical | Where-Object { $_.Status -eq "Up" } | Select-Object -First(1)).Name
+#	# NOTE! This one will disrupt network traffic on your machine
+#	New-VMSwitch $SwitchName -NetAdapterName $netadaptername -AllowManagementOS $true
+#}
 
 # create manager machine
 echo "======> Creating manager machine ..."
@@ -32,4 +40,4 @@ docker-machine ls
 echo "======> Members of swarm on manager node"
 docker-machine ssh manager "docker node ls"
 
-echo "Issue 'docker-machine ssh manager' and start typing commands on page 123, Labeling Swarm Nodes"
+echo "You may now run script 'manager-setup.ps1'"
