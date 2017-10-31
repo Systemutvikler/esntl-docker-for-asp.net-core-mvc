@@ -1,32 +1,32 @@
 ﻿$exampleappimagename = "myswarmregistry:5000/exampleapp:swarm-1.0"
-$gitbash = "C:\Program Files\Git\git-bash.exe"
 $managerip = docker-machine ip manager
 
-# copy haproxy.cfg to manager
-& $gitbash -c "docker-machine scp './haproxy.cfg' manager:~ && echo 'OK' || exec bash"
-Start-Sleep -Seconds 3
-
-# copy registry cert files to manager
-& $gitbash -c "docker-machine scp -r ./certs/host/ manager:~/certs && docker-machine ssh manager 'sudo mkdir -p /etc/docker/certs.d/myswarmregistry:5000 && sudo cp /home/docker/certs/myswarmregistry.crt /etc/docker/certs.d/myswarmregistry:5000/ca.crt'"
-Start-Sleep -Seconds 3
+# copy haproxy.cfg and registry cert files to manager
+$haproxycfg = [IO.File]::ReadAllText("$pwd\haproxy.cfg")
+$myswarmregistryca = [IO.File]::ReadAllText("$pwd\certs\host\myswarmregistry.crt")
+$myswarmregistrykey = [IO.File]::ReadAllText("$pwd\certs\host\myswarmregistry.key")
+docker-machine ssh manager "printf '%s' '$haproxycfg' | sudo tee /etc/docker/haproxy.cfg && \
+  sudo mkdir -p /etc/docker/certs.d/myswarmregistry:5000 && \
+  printf '%s' '$myswarmregistryca' | sudo tee /etc/docker/myswarmregistry.crt && \
+  printf '%s' '$myswarmregistrykey' | sudo tee /etc/docker/myswarmregistry.key && \
+  sudo cp /etc/docker/myswarmregistry.crt /etc/docker/certs.d/myswarmregistry:5000/ca.crt" 
 
 # Redirect all docker commands to manager VM
 docker-machine env manager | Invoke-Expression
 
 # create registry at manager VM
-docker run -d --restart=always --name myswarmregistry --hostname myswarmregistry -v /home/docker/certs:/certs -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/myswarmregistry.crt -e REGISTRY_HTTP_TLS_KEY=/certs/myswarmregistry.key -e REGISTRY_HTTP_SECRET=hemmelig -p 5000:5000 registry:2
+docker run -d --restart=always --name myswarmregistry --hostname myswarmregistry -v /etc/docker:/certs -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/myswarmregistry.crt -e REGISTRY_HTTP_TLS_KEY=/certs/myswarmregistry.key -e REGISTRY_HTTP_SECRET=hemmelig -p 5000:5000 registry:2
 
-# tell manager where to find registry
+# Tell manager where to find registry. Works as long as ip's don't change between hyper-v image reboots
 $myswarmregistryip = docker inspect --format "{{ .NetworkSettings.IPAddress }}" myswarmregistry
 docker-machine ssh manager "echo $myswarmregistryip  myswarmregistry | sudo tee -a /etc/hosts"
 
 $workernodes = "worker1", "worker2", "worker3"
-$myswarmregistryca = [IO.File]::ReadAllText("$pwd\certs\host\myswarmregistry.crt")
 foreach ($node in $workernodes)
 {
 	docker node update --label-add type=mvc $node
 	# make sure worker node trust our registry, and can find it exposed on manager:5000 
-	docker-machine ssh $node "sudo mkdir -p /etc/docker/certs.d/myswarmregistry:5000; \
+	docker-machine ssh $node "sudo mkdir -p /etc/docker/certs.d/myswarmregistry:5000 && \
 								printf '%s' '$myswarmregistryca' | sudo tee /etc/docker/certs.d/myswarmregistry:5000/ca.crt; \
 								echo $managerip  myswarmregistry | sudo tee -a /etc/hosts" 
 }
@@ -53,9 +53,14 @@ docker push $exampleappimagename
 
 docker -D service create --detach=false --name mvcapp --constraint "node.labels.type==mvc" --replicas 5 --network swarm_backend -p 3000:80 -e DBHOST=mysql $exampleappimagename
 
-docker container run -d --name loadbalancer -v "/home/docker/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg" --add-host manager:$managerip -p 80:80 haproxy:1.7.0
+docker container run -d --name loadbalancer -v "/etc/docker/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg" --add-host manager:$managerip -p 80:80 haproxy:1.7.0
+
 # display any errors
-docker logs loadbalancer
+echo "======> loadbalancer logs"
+docker logs --tail 5 loadbalancer
+
+echo "======> myswarmregistry logs"
+docker logs --tail 5 myswarmregistry
 
 docker-machine env -u | Invoke-Expression
 
