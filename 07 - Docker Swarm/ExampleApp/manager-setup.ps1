@@ -1,4 +1,6 @@
-﻿$exampleappimagename = "myswarmregistry:5000/exampleapp:swarm-1.0"
+﻿# run after hyperv-setup.ps1, see readme.md
+
+$exampleappimagename = "myswarmregistry:5000/exampleapp:swarm-1.0"
 $managerip = docker-machine ip manager
 
 # copy haproxy.cfg and registry cert files to manager
@@ -51,6 +53,7 @@ docker build . -t $exampleappimagename -f .\Dockerfile
 
 docker push $exampleappimagename
 
+# BUG in docker 17.10 "Unable to complete atomic operation, key modified"
 docker -D service create --detach=false --name mvcapp --constraint "node.labels.type==mvc" --replicas 5 --network swarm_backend -p 3000:80 -e DBHOST=mysql $exampleappimagename
 
 docker container run -d --name loadbalancer -v "/etc/docker/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg" --add-host manager:$managerip -p 80:80 haproxy:1.7.0

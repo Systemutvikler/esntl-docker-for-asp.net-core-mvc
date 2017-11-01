@@ -3,8 +3,7 @@
 # Change the SwitchName to the name of your external virtual switch if you have one
 $SwitchName = "MySwarmExternalSwitch"
 
-# Need the switch on the first physical adapter if it doesn't exist
-# Can't create it here cause then we have to wait for network to come back up again.
+# check if switchis created
 if (!$(Get-VMSwitch $SwitchName 2>$null)) {
 	$netadaptername = $(Get-NetAdapter -Physical | Where-Object { $_.Status -eq "Up" } | Select-Object -First(1)).Name
 	echo "You need to create a hyper-v external switch before you can run this script"
@@ -12,7 +11,7 @@ if (!$(Get-VMSwitch $SwitchName 2>$null)) {
 	echo "Try:"
 	echo "   New-VMSwitch ""$SwitchName"" -NetAdapterName ""$netadaptername"" -AllowManagementOS `$true"
 	echo "and then rerun the script once network is back up again."
-	[Environment]::Exit(1)
+	Exit(1)
 }
 
 # create manager machine
