@@ -9,12 +9,12 @@ All commands must be run from an elevated PowerShell console (Run as administrat
 The scripts rely on a hyper-v external switch named "MySwarmExternalSwitch" that is connected to a physical adapter. 
 If you are clueless,  create one with the following two PS commands:
 ```
-$netadaptername = $(Get-NetAdapter -Physical | Where-Object { $_.Status -eq "Up" } | Select-Object -First(1)).Name
+$netadaptername = $(Get-NetAdapter -Physical | ? Status -eq 'up' | Select-Object -First 1).Name
 New-VMSwitch "MySwarmExternalSwitch" -NetAdapterName $netadaptername -AllowManagementOS $true
 ```
 You may alter hyperv-setup.ps1 to use an existing hyper-v switch as log as it is external.
 #### Create hyper-v images
-Creating the five images will take some time. Issue:
+Creating the five images may take some time. Issue:
 ```
 .\hyperv-setup.ps1
 ```

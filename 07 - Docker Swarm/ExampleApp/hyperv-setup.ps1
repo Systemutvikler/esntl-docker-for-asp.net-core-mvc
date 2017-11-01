@@ -5,12 +5,12 @@ $SwitchName = "MySwarmExternalSwitch"
 
 # check if switchis created
 if (!$(Get-VMSwitch $SwitchName 2>$null)) {
-	$netadaptername = $(Get-NetAdapter -Physical | Where-Object { $_.Status -eq "Up" } | Select-Object -First(1)).Name
-	echo "You need to create a hyper-v external switch before you can run this script"
-	echo "or modify this script to use an existing hyper-v switch (Get-VMSwitch -SwitchType External)"
+	$netadaptername = $(Get-NetAdapter -Physical | ? Status -eq 'up' | Select-Object -First 1).Name
+	echo "You need to create a hyper-v external switch before running this script,"
+	echo "or modify it to use an existing hyper-v switch. (Get-VMSwitch -SwitchType External)"
 	echo "Try:"
 	echo "   New-VMSwitch ""$SwitchName"" -NetAdapterName ""$netadaptername"" -AllowManagementOS `$true"
-	echo "and then rerun the script once network is back up again."
+	echo "and then re-run the script once network is back up again."
 	Exit(1)
 }
 
