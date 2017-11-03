@@ -4,7 +4,7 @@
 
 
 ### Running the swarm on Windows 10 Hyper-V with local registry
-All commands must be run from an elevated PowerShell console (Run as administrator). Shortcut: Win-X A.
+All commands must be run from an elevated PowerShell console (Run as administrator). Shortcut: Win-X A. Do not attempt to run the scripts unless you have at least 16GB and a SSD.
 
 The scripts rely on a hyper-v external switch named "MySwarmExternalSwitch" that is connected to a physical adapter. 
 If you are clueless,  create one with the following two PS commands:

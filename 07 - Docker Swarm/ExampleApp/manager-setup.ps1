@@ -1,5 +1,6 @@
-﻿# run after hyperv-setup.ps1, see readme.md
+﻿# run after hyperv-setup.ps1, see ./dotnetcore2.0-migration.md
 
+# push/pull example app from local registry myswarmregistry on manager VM. No auth!
 $exampleappimagename = "myswarmregistry:5000/exampleapp:swarm-1.0"
 $managerip = docker-machine ip manager
 
@@ -21,9 +22,11 @@ docker pull registry:2
 echo "======> Setting up local registry exposed by manager ($managerip)"
 docker run -d --restart=always --name myswarmregistry --hostname myswarmregistry -v /etc/docker:/certs -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/myswarmregistry.crt -e REGISTRY_HTTP_TLS_KEY=/certs/myswarmregistry.key -e REGISTRY_HTTP_SECRET=hemmelig -p 5000:5000 registry:2
 
-# Tell manager where to find registry. Works as long as ip's don't change between hyper-v image reboots
+# Oddity! Guess the next command waits for previous "docker run --detach" to complete before it returns ip
+# Tell manager where to find registry. Works as long as ip's don't change between hyper-v reboots
 $myswarmregistryip = docker inspect --format "{{ .NetworkSettings.IPAddress }}" myswarmregistry
 echo "======> myswarmregistry ip address: $myswarmregistryip"
+# docker push won't work unless we modify /etc/hosts
 docker-machine ssh manager "echo $myswarmregistryip  myswarmregistry | sudo tee -a /etc/hosts"
 
 $workernodes = "worker1", "worker2", "worker3"
@@ -38,6 +41,7 @@ foreach ($node in $workernodes)
 
 docker network create -d overlay swarm_backend
 
+# --detach=false means the script waits until the command is done. Obvious choise here, next command can't run unless this one succeedes.
 echo "======> Setting up mysql service. Could take some time ..."
 docker service create --detach=false --name mysql --mount type=volume,source=productdata,destination=/var/lib/mysql --constraint "node.hostname == dbhost" --replicas 1 --network swarm_backend -e MYSQL_ROOT_PASSWORD=mysecret -e bindaddress=0.0.0.0 mysql:8.0.0
 
@@ -54,11 +58,14 @@ echo "======> Build App image using <TargetFramework> from .csproj"
 dotnet publish -c Release -o dist
 docker build . -t $exampleappimagename -f .\Dockerfile
 
+echo "======> Pushing $exampleappimagename to local registry $managerip (manager)"
 docker push $exampleappimagename
 
 # BUG in docker 17.10 "Unable to complete atomic operation, key modified"
+echo "======> Creating mvcapp service. Note! This is where docker migth fail. Fingers crossed ..."
 docker -D service create --detach=false --name mvcapp --constraint "node.labels.type==mvc" --replicas 5 --network swarm_backend -p 3000:80 -e DBHOST=mysql $exampleappimagename
 
+echo "======> Setting up loadbalancer"
 docker pull haproxy:1.7.0
 docker container run -d --name loadbalancer -v "/etc/docker/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg" --add-host manager:$managerip -p 80:80 haproxy:1.7.0
 

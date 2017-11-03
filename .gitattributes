@@ -2,3 +2,5 @@
 
 **/node_modules/wait-for-it.sh/bin/* text eol=lf
 haproxy.cfg text eol=lf
+myswarmregistry.crt eol=lf
+myswarmregistry.key eol=lf
