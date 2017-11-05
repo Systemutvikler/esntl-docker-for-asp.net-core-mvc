@@ -1,6 +1,12 @@
 ﻿# run after hyperv-setup.ps1, see ./dotnetcore2.0-migration.md
 
-# push/pull example app from local registry myswarmregistry on manager VM. No auth!
+if ( !$(Test-Path ".\node_modules\wait-for-it.sh"))
+{
+	echo "Open solution in Visual Studio to restore packages, then re-run this script"
+	Exit 1
+}
+
+# Use local registry myswarmregistry on manager VM. No auth!
 $exampleappimagename = "myswarmregistry:5000/exampleapp:swarm-1.0"
 $managerip = docker-machine ip manager
 
