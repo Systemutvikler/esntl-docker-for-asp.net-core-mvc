@@ -1,6 +1,3 @@
-# Git documentation anyone? I don't want windoze git to convert lf to crlf for files in this folder and subfolders ONLY how-to
-
-**/node_modules/wait-for-it.sh/bin/* text eol=lf
 haproxy.cfg text eol=lf
 myswarmregistry.crt eol=lf
 myswarmregistry.key eol=lf
