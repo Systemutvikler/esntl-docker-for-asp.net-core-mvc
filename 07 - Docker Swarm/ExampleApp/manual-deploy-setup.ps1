@@ -14,11 +14,7 @@ docker service create --detach=false --name mysql --mount type=volume,source=pro
 
 echo "======> Initializing database on dbhost:3306"
 docker service update --detach=false --publish-add 3306:3306 mysql
-$Env:INITDB = "true"
-$Env:DBHOST = $(docker-machine ip dbhost)
-dotnet run
-Remove-Item Env:\DBHOST
-Remove-Item Env:\INITDB
+dotnet run --INITDB=true --DBHOST=$(docker-machine ip dbhost)
 docker service update --detach=false --publish-rm 3306:3306 mysql
 
 # BUG in docker 17.10 "Unable to complete atomic operation, key modified" Solved: Git issue. crlf in files copied to boot2docker

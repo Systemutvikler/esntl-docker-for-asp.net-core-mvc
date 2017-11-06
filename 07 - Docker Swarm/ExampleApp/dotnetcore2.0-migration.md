@@ -37,11 +37,7 @@ docker service ls
 docker service ps exampleapp_mvc
 docker service update --detach=false --publish-add 3306:3306 exampleapp_mysql
 # wait for mysql to come up before moving on
-$Env:INITDB = "true"
-$Env:DBHOST = $(docker-machine ip dbhost)
-dotnet run
-Remove-Item Env:\DBHOST
-Remove-Item Env:\INITDB
+dotnet run --INITDB=true --DBHOST=$(docker-machine ip dbhost)
 docker service update --detach=false --publish-rm 3306:3306 exampleapp_mysql
 docker container run -d --name loadbalancer -v "/etc/docker/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg" --add-host manager:$(docker-machine ip manager) -p 80:80 haproxy:1.7.0
 docker logs loadbalancer

@@ -9,13 +9,11 @@ using Microsoft.EntityFrameworkCore;
 namespace ExampleApp {
     public class Startup {
 
-        private IConfigurationRoot Configuration;
+        private IConfiguration Configuration;
 
-        public Startup(IHostingEnvironment env) {
-            Configuration = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddEnvironmentVariables()
-                .Build();
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
         }
 
         public void ConfigureServices(IServiceCollection services) {
