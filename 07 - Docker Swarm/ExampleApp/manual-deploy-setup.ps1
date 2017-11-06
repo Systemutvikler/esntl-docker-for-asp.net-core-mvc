@@ -33,6 +33,7 @@ docker container run -d --name loadbalancer -v "/etc/docker/haproxy.cfg:/usr/loc
 echo "======> loadbalancer logs"
 docker logs --tail 5 loadbalancer
 
+echo "======> Detaching from active machine manager. To reattach issue: docker-machine env manager | iex"
 docker-machine env -u | Invoke-Expression
 
 echo "======> done"

@@ -32,7 +32,7 @@ services:
     ports: 
       - 3000:80      
     deploy:
-        mode: global
+        replicas: 5
         placement:
             constraints:
             - node.labels.type == mvc      

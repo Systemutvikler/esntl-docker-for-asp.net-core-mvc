@@ -4,7 +4,7 @@
 $SwitchName = "MySwarmExternalSwitch"
 $exampleappimagename = "myswarmregistry:5000/exampleapp:swarm-1.0"
 
-# check if switchis created
+# check if switch exists
 if (!$(Get-VMSwitch $SwitchName 2>$null)) {
 	$netadaptername = $(Get-NetAdapter -Physical | ? Status -eq 'up' | Select-Object -First 1).Name
 	echo "You need to create a hyper-v external switch before running this script,"
@@ -13,13 +13,6 @@ if (!$(Get-VMSwitch $SwitchName 2>$null)) {
 	echo "   New-VMSwitch ""$SwitchName"" -NetAdapterName ""$netadaptername"" -AllowManagementOS `$true"
 	echo "and then re-run the script once network is back up again."
 	Exit(1)
-}
-
-# cant build unless all files are present
-if ( !$(Test-Path ".\node_modules\wait-for-it.sh"))
-{
-	echo "Open solution in Visual Studio to restore packages, then re-run this script"
-	Exit 1
 }
 
 echo "======> Creating manager machine ..."
@@ -36,22 +29,24 @@ docker-machine ssh manager "printf '%s' '$haproxycfg' | sudo tee /etc/docker/hap
   printf '%s' '$myswarmregistrykey' | sudo tee /etc/docker/myswarmregistry.key && \
   sudo cp /etc/docker/myswarmregistry.crt /etc/docker/certs.d/myswarmregistry:5000/ca.crt" 
 
-# Redirect all docker commands to manager VM (not shell commands, have to ssh on them)
+# Redirect all docker commands to manager VM (not shell commands, they will have to be ssh'ed)
 docker-machine env manager | Invoke-Expression
 
 # create registry at manager VM
-docker pull registry:2
 echo "======> Setting up local registry exposed by manager ($managerip)"
+docker pull registry:2
 docker run -d --restart=always --name myswarmregistry --hostname myswarmregistry -v /etc/docker:/certs -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/myswarmregistry.crt -e REGISTRY_HTTP_TLS_KEY=/certs/myswarmregistry.key -e REGISTRY_HTTP_SECRET=hemmelig -p 5000:5000 registry:2
 
 # Oddity! Guess the next command waits for previous "docker run --detach" to complete before it returns ip
-# Tell manager where to find registry. Works as long as ip's don't change between hyper-v reboots
+# Tell manager where to find registry by modifying hosts. Works as long as ip's don't change between hyper-v reboots
 $myswarmregistryip = docker inspect --format "{{ .NetworkSettings.IPAddress }}" myswarmregistry
 echo "======> myswarmregistry ip address: $myswarmregistryip"
-# docker push won't work unless we modify /etc/hosts
 docker-machine ssh manager "echo $myswarmregistryip  myswarmregistry | sudo tee -a /etc/hosts"
 
-echo "======> Build App image using <TargetFramework> from .csproj"
+echo "======> Building app image $exampleappimagename"
+# npm and bower will only work if you installed the required software as described in chapter 3
+npm install
+bower install
 dotnet publish -c Release -o dist
 docker build . -t $exampleappimagename -f .\Dockerfile
 
@@ -86,6 +81,7 @@ foreach ($node in $workernodes) {
 
 # display any errors
 echo "======> myswarmregistry logs"
+# docker logs myswarmregistry | select-string -pattern "level=error" | select -last 5
 docker logs --tail 5 myswarmregistry
 echo "======> end logs"
 
@@ -97,6 +93,7 @@ docker-machine ls
 echo "======> Members of swarm on manager node"
 docker-machine ssh manager "docker node ls"
 
+echo "======> Detaching from active machine manager. To reattach issue: docker-machine env manager | iex"
 docker-machine env -u | Invoke-Expression
 
-echo "You may now run script 'manual-deploy-setup.ps1' or deploy using compose file ????"
+echo "You may now run script 'manual-deploy-setup.ps1' or deploy using compose file docker-compose-swarm-hyperv.yml"
