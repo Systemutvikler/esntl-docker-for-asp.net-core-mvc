@@ -44,9 +44,6 @@ echo "======> myswarmregistry ip address: $myswarmregistryip"
 docker-machine ssh manager "echo $myswarmregistryip  myswarmregistry | sudo tee -a /etc/hosts"
 
 echo "======> Building app image $exampleappimagename"
-# npm and bower will only work if you installed the required software as described in chapter 3
-npm install
-bower install
 dotnet publish -c Release -o dist
 docker build . -t $exampleappimagename -f .\Dockerfile
 

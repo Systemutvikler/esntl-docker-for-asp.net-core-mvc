@@ -53,7 +53,6 @@ docker service update -d=false --force exampleapp_mvc
 docker-machine env -u | iex
 ```
 ### Updating a service (p.140)
-If folders "node_modules" and "wwwroot/lib" are missing, run ```npm install;bower install```.
 ```
 docker-machine env manager | iex
 dotnet publish -c Release -o dist
