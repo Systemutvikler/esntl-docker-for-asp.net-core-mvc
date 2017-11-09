@@ -14,12 +14,9 @@
     <Folder Include="certs\host\" />
   </ItemGroup>
   
-  <Target Name="manageNodePackages" BeforeTargets="BeforePublish">
+  <Target Name="BeforePublishInstallDeps" BeforeTargets="PrepareForPublish">
     <Exec Command="npm install" />
-  </Target>
-
-  <Target Name="manageBowerPackages" BeforeTargets="BeforePublish">
     <Exec Command="bower install" />
   </Target>
-  
+
 </Project>

@@ -5,7 +5,9 @@
 
 ### Running the swarm on Windows 10 Hyper-V with local registry
 All commands must be run from an elevated PowerShell console (Run as administrator). 
-Shortcut: Win-X A. Do not attempt to run the scripts unless you have at least 16GB+SSD.
+Shortcut: Win-X A. Do not attempt to run the scripts unless you have at least 16GB+SSD. 
+If you get ___error MSB3073: The command "npm|bower install" exited with code 9009.___ see chapter 3 in the book. 
+Have to install node.js and some more.
 
 The scripts rely on a hyper-v external switch named "MySwarmExternalSwitch" that is connected to a physical adapter. 
 You will get a warning and script will exit if it is missing.
